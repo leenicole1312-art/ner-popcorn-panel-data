@@ -1,0 +1,12 @@
+{
+  "name": "ner-popcorn-panel-data",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "update": "node scripts/update-top250.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}
