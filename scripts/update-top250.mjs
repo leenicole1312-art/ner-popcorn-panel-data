@@ -51,9 +51,49 @@ async function scrapeTop250() {
 
   try {
     await page.goto(CHART_URL, { waitUntil: "domcontentloaded", timeout: 90000 });
-    await page.waitForSelector("li.ipc-metadata-list-summary-item", { timeout: 60000 });
+    await page.waitForSelector(
+  "li.ipc-metadata-list-summary-item",
+  { timeout: 60000 }
+);
 
-    const raw = await page.locator("li.ipc-metadata-list-summary-item").evaluateAll((items) =>
+// IMDb lazy-loads part of the chart.
+// Scroll repeatedly until all 250 films are present.
+const filmRows = page.locator(
+  "li.ipc-metadata-list-summary-item"
+);
+
+let previousCount = 0;
+
+for (let attempt = 0; attempt < 30; attempt++) {
+  const currentCount = await filmRows.count();
+
+  console.log(
+    `Loaded ${currentCount} IMDb chart entries`
+  );
+
+  if (currentCount >= EXPECTED_COUNT) {
+    break;
+  }
+
+  if (currentCount === previousCount) {
+    await page.mouse.wheel(0, 5000);
+  } else {
+    await filmRows.last().scrollIntoViewIfNeeded();
+  }
+
+  previousCount = currentCount;
+  await page.waitForTimeout(1000);
+}
+
+const finalCount = await filmRows.count();
+
+if (finalCount < EXPECTED_COUNT) {
+  throw new Error(
+    `IMDb only loaded ${finalCount} of ${EXPECTED_COUNT} chart entries.`
+  );
+}
+
+const raw = await filmRows.evaluateAll((items) =>
       items.map((item, index) => {
         const link = item.querySelector('a[href*="/title/tt"]');
         const href = link?.getAttribute("href") ?? "";
