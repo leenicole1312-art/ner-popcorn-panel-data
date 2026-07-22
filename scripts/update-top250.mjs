@@ -58,8 +58,21 @@ async function scrapeTop250() {
         const link = item.querySelector('a[href*="/title/tt"]');
         const href = link?.getAttribute("href") ?? "";
         const imdbId = href.match(/tt\d{7,10}/)?.[0] ?? "";
-        const heading = item.querySelector("h3.ipc-title__text")?.textContent ?? "";
-        const title = heading.replace(/^\s*\d+\.\s*/, "").trim();
+        const titleLink =
+  item.querySelector('a.ipc-title-link-wrapper[href*="/title/tt"]') ??
+  item.querySelector('a[href*="/title/tt"]');
+
+const heading =
+  titleLink?.querySelector("h3")?.textContent ??
+  item.querySelector("h3")?.textContent ??
+  titleLink?.getAttribute("aria-label") ??
+  titleLink?.textContent ??
+  "";
+
+const title = heading
+  .replace(/^\s*#?\d+\.\s*/, "")
+  .replace(/\s+/g, " ")
+  .trim();
         const metadata = Array.from(item.querySelectorAll(".cli-title-metadata-item"))
           .map((node) => node.textContent?.trim() ?? "");
         const ratingText =
